@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -29,7 +29,6 @@ async function compressImage(file: File): Promise<Blob> {
 }
 
 export function ScanPage() {
-  const inputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
@@ -76,11 +75,11 @@ export function ScanPage() {
       <p className="eyebrow">New daily sheet</p>
       <h1 id="scan-title">Scan collection sheet</h1>
       <p className="settings-help">You will check every value before anything is saved.</p>
-      <input accept="image/*" className="visually-hidden" onChange={(event) => void handleFile(event.target.files?.[0])} ref={inputRef} type="file" />
-      <button className="scan-picker" disabled={Boolean(progress)} onClick={() => inputRef.current?.click()} type="button">
+      <label className="scan-picker">
+        <input accept="image/*" aria-label="Take a photo or choose a collection sheet from your gallery" className="scan-picker__input" disabled={Boolean(progress)} onChange={(event) => void handleFile(event.target.files?.[0])} type="file" />
         {selectedPreview ? <img alt="Selected collection sheet" className="scan-picker__preview" src={selectedPreview} /> : <span aria-hidden="true">▣</span>}
         <strong>{progress ?? (selectedPreview ? 'Photo selected' : 'Take photo or choose from gallery')}</strong><small>{selectedPreview ? 'Preparing your private photo…' : 'Choose Camera or Photo Library. JPEG is compressed privately before review.'}</small>
-      </button>
+      </label>
       {error && <p className="form-feedback form-feedback--error" role="alert">{error}</p>}
     </section>
   )
