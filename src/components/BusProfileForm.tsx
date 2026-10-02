@@ -41,7 +41,7 @@ export function BusProfileForm({ initialValue = blankProfile, onSave, submitLabe
     <form className="profile-form" onSubmit={(event) => void handleSubmit(event)}>
       <label>
         <span>{strings.registrationNumber}</span>
-        <input autoCapitalize="characters" autoComplete="off" onChange={(event) => updateField('registrationNumber', event.target.value)} required value={form.registrationNumber} />
+        <input autoCapitalize="characters" autoComplete="off" maxLength={13} onChange={(event) => updateField('registrationNumber', event.target.value)} placeholder="KL10Q8081" required value={form.registrationNumber} />
       </label>
       <label>
         <span>{strings.displayName} <em>{strings.optional}</em></span>
