@@ -49,7 +49,7 @@ export function ScanPage() {
       setProgress('Reading the sheet…')
       const { data, error: extractionError } = await supabase.functions.invoke('extract-collection-sheet', { body: { photoPath } })
       if (!extractionError && data?.draft) draft = { ...draft, ...data.draft, id, photoPath }
-      if (extractionError) draft.needsReview = ['OCR was unavailable — enter the values manually.']
+      if (extractionError || !data?.draft) draft.needsReview = ['OCR could not read this photo. Enter the values manually, then save the verified sheet.']
       sessionStorage.setItem('busledger-sheet-draft', JSON.stringify(draft))
       navigate('/review/details')
     } catch (reason) {

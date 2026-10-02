@@ -22,7 +22,16 @@ export function ReviewPage() {
   })
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   useEffect(() => { if (draft) sessionStorage.setItem('busledger-sheet-draft', JSON.stringify(draft)) }, [draft])
+  useEffect(() => {
+    let active = true
+    if (!draft || !supabase) return () => { active = false }
+    void supabase.storage.from('sheet-photos').createSignedUrl(draft.photoPath, 300).then(({ data }) => {
+      if (active) setPhotoUrl(data?.signedUrl ?? null)
+    })
+    return () => { active = false }
+  }, [draft])
   const total = useMemo(() => totalDraftExpenses(draft?.expenses ?? []), [draft])
   if (!draft) return <section className="review-page"><h1>No sheet draft found</h1><Link className="primary-action" to="/scan">Choose a sheet photo</Link></section>
   const reviewedDraft: CollectionSheetDraft = draft
@@ -46,6 +55,7 @@ export function ReviewPage() {
       <p className="eyebrow">Review before saving</p><h1 id="review-title">{currentStep === 'details' ? 'Sheet details' : currentStep === 'expenses' ? 'Expenses' : 'Review & save'}</h1>
       <div className="review-steps">{steps.map((item, index) => <Link aria-current={item === currentStep ? 'step' : undefined} className={item === currentStep ? 'review-step review-step--active' : 'review-step'} key={item} to={`/review/${item}`}>{index + 1}. {item === 'save' ? 'Save' : item}</Link>)}</div>
       {draft.needsReview.length > 0 && <p className="review-notice">Needs review: {draft.needsReview.join(', ')}</p>}
+      {photoUrl && <a className="sheet-photo" href={photoUrl} rel="noreferrer" target="_blank"><img alt="Original collection sheet — tap to expand" src={photoUrl} /><span>Original sheet photo · Tap to expand</span></a>}
       {currentStep === 'details' && <div className="review-form"><label>Date<input max={new Date().toISOString().slice(0, 10)} onChange={(event) => setDraft({ ...draft, sheetDate: event.target.value })} type="date" value={draft.sheetDate} /></label>{(['driverName', 'conductorName', 'checkerName', 'cleanerName'] as const).map((field) => <label key={field}>{field.replace('Name', '')}<input onChange={(event) => setDraft({ ...draft, [field]: event.target.value })} value={draft[field]} /></label>)}<Link className="primary-action" to="/review/expenses">Continue to expenses</Link></div>}
       {currentStep === 'expenses' && <div className="review-form">{draft.expenses.map((expense, index) => <label className="expense-row" key={`${expense.category}-${index}`}><span>{getExpenseLabel(expense.category)}</span><input inputMode="numeric" onChange={(event) => updateExpense(index, { amount: asWholeRupees(event.target.value) })} placeholder="0" value={expense.amount ?? ''} />{expense.category === 'others' && <input onChange={(event) => updateExpense(index, { note: event.target.value })} placeholder="Note" value={expense.note} />}</label>)}<button className="text-button" onClick={() => setDraft({ ...draft, expenses: [...draft.expenses, { category: 'others', amount: null, note: '' }] })} type="button">+ Add another other expense</button><Link className="primary-action" to="/review/save">Continue to review</Link></div>}
       {currentStep === 'save' && <div className="review-form"><label>Collection<input inputMode="numeric" onChange={(event) => setDraft({ ...draft, collection: asWholeRupees(event.target.value) })} placeholder="Required" value={draft.collection ?? ''} /></label><label>Paper total <em>Optional</em><input inputMode="numeric" onChange={(event) => setDraft({ ...draft, writtenTotal: asWholeRupees(event.target.value) })} value={draft.writtenTotal ?? ''} /></label><label>Paper balance <em>Optional</em><input inputMode="numeric" onChange={(event) => setDraft({ ...draft, writtenBalance: asWholeRupees(event.target.value, true) })} value={draft.writtenBalance ?? ''} /></label><label>Owner note <em>Optional</em><textarea onChange={(event) => setDraft({ ...draft, notes: event.target.value })} value={draft.notes} /></label><div className="review-summary"><span>Total operating expense <strong>{formatRupees(total)}</strong></span><span>Daily balance <strong>{formatRupees((draft.collection ?? 0) - total)}</strong></span></div>{draft.writtenTotal !== null && draft.writtenTotal !== total && <p className="review-notice">Possible mismatch: paper says {formatRupees(draft.writtenTotal)}, calculated {formatRupees(total)}.</p>}<button className="primary-action" disabled={saving} onClick={() => void saveSheet()} type="button">{saving ? 'Saving sheet…' : 'Save sheet'}</button></div>}
