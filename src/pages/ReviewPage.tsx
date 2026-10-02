@@ -22,13 +22,16 @@ export function ReviewPage() {
   })
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(() => sessionStorage.getItem('busledger-sheet-photo-preview'))
   useEffect(() => { if (draft) sessionStorage.setItem('busledger-sheet-draft', JSON.stringify(draft)) }, [draft])
   useEffect(() => {
     let active = true
     if (!draft || !supabase) return () => { active = false }
     void supabase.storage.from('sheet-photos').createSignedUrl(draft.photoPath, 300).then(({ data }) => {
-      if (active) setPhotoUrl(data?.signedUrl ?? null)
+      if (active && data?.signedUrl) {
+        setPhotoUrl(data.signedUrl)
+        sessionStorage.setItem('busledger-sheet-photo-preview', data.signedUrl)
+      }
     })
     return () => { active = false }
   }, [draft])
@@ -48,7 +51,7 @@ export function ReviewPage() {
     })
     setSaving(false)
     if (saveError) { setError(saveError.message); return }
-    sessionStorage.removeItem('busledger-sheet-draft'); navigate('/')
+    sessionStorage.removeItem('busledger-sheet-draft'); sessionStorage.removeItem('busledger-sheet-photo-preview'); navigate('/')
   }
   return (
     <section className="review-page" aria-labelledby="review-title">

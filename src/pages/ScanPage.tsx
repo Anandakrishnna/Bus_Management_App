@@ -38,9 +38,12 @@ export function ScanPage() {
 
     const id = crypto.randomUUID()
     const photoPath = `${user.id}/${id}.jpg`
+    let previewUrl: string | null = null
     try {
       setProgress('Preparing your private photo…')
       const image = await compressImage(file)
+      previewUrl = URL.createObjectURL(image)
+      sessionStorage.setItem('busledger-sheet-photo-preview', previewUrl)
       setProgress('Uploading your private photo…')
       const { error: uploadError } = await supabase.storage.from('sheet-photos').upload(photoPath, image, { contentType: 'image/jpeg', upsert: false })
       if (uploadError) throw uploadError
@@ -53,6 +56,8 @@ export function ScanPage() {
       sessionStorage.setItem('busledger-sheet-draft', JSON.stringify(draft))
       navigate('/review/details')
     } catch (reason) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      sessionStorage.removeItem('busledger-sheet-photo-preview')
       setError(reason instanceof Error ? reason.message : 'We could not prepare this sheet. Please try again.')
     } finally { setProgress(null) }
   }
@@ -62,9 +67,9 @@ export function ScanPage() {
       <p className="eyebrow">New daily sheet</p>
       <h1 id="scan-title">Scan collection sheet</h1>
       <p className="settings-help">You will check every value before anything is saved.</p>
-      <input accept="image/*" capture="environment" className="visually-hidden" onChange={(event) => void handleFile(event.target.files?.[0])} ref={inputRef} type="file" />
+      <input accept="image/*" className="visually-hidden" onChange={(event) => void handleFile(event.target.files?.[0])} ref={inputRef} type="file" />
       <button className="scan-picker" disabled={Boolean(progress)} onClick={() => inputRef.current?.click()} type="button">
-        <span aria-hidden="true">▣</span><strong>{progress ?? 'Take photo or choose from gallery'}</strong><small>JPEG is compressed privately before review.</small>
+        <span aria-hidden="true">▣</span><strong>{progress ?? 'Take photo or choose from gallery'}</strong><small>Choose Camera or Photo Library. JPEG is compressed privately before review.</small>
       </button>
       {error && <p className="form-feedback form-feedback--error" role="alert">{error}</p>}
     </section>
