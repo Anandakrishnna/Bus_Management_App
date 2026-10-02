@@ -8,7 +8,13 @@ import type { CollectionSheetDraft } from '../types/sheet'
 const maxImageBytes = 10 * 1024 * 1024
 
 async function compressImage(file: File): Promise<Blob> {
-  const image = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  const previewUrl = URL.createObjectURL(file)
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const element = new Image()
+    element.onload = () => resolve(element)
+    element.onerror = () => reject(new Error('Your phone could not read this image.'))
+    element.src = previewUrl
+  })
   const scale = Math.min(1, 1600 / Math.max(image.width, image.height))
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(image.width * scale)
@@ -17,7 +23,7 @@ async function compressImage(file: File): Promise<Blob> {
   if (!context) throw new Error('Your browser could not prepare this image.')
   context.drawImage(image, 0, 0, canvas.width, canvas.height)
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.7))
-  image.close()
+  URL.revokeObjectURL(previewUrl)
   if (!blob) throw new Error('Your browser could not compress this image.')
   return blob
 }
@@ -28,6 +34,7 @@ export function ScanPage() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState<string | null>(null)
+  const [selectedPreview, setSelectedPreview] = useState<string | null>(null)
 
   async function handleFile(file: File | undefined) {
     setError(null)
@@ -40,6 +47,8 @@ export function ScanPage() {
     const photoPath = `${user.id}/${id}.jpg`
     let previewUrl: string | null = null
     try {
+      const selectedUrl = URL.createObjectURL(file)
+      setSelectedPreview(selectedUrl)
       setProgress('Preparing your private photo…')
       const image = await compressImage(file)
       previewUrl = URL.createObjectURL(image)
@@ -69,7 +78,8 @@ export function ScanPage() {
       <p className="settings-help">You will check every value before anything is saved.</p>
       <input accept="image/*" className="visually-hidden" onChange={(event) => void handleFile(event.target.files?.[0])} ref={inputRef} type="file" />
       <button className="scan-picker" disabled={Boolean(progress)} onClick={() => inputRef.current?.click()} type="button">
-        <span aria-hidden="true">▣</span><strong>{progress ?? 'Take photo or choose from gallery'}</strong><small>Choose Camera or Photo Library. JPEG is compressed privately before review.</small>
+        {selectedPreview ? <img alt="Selected collection sheet" className="scan-picker__preview" src={selectedPreview} /> : <span aria-hidden="true">▣</span>}
+        <strong>{progress ?? (selectedPreview ? 'Photo selected' : 'Take photo or choose from gallery')}</strong><small>{selectedPreview ? 'Preparing your private photo…' : 'Choose Camera or Photo Library. JPEG is compressed privately before review.'}</small>
       </button>
       {error && <p className="form-feedback form-feedback--error" role="alert">{error}</p>}
     </section>
