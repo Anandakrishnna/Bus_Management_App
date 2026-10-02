@@ -9,6 +9,8 @@ import { MenuPage } from './pages/MenuPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SetupPage } from './pages/SetupPage'
+import { ScanPage } from './pages/ScanPage'
+import { ReviewPage } from './pages/ReviewPage'
 
 function ProtectedShell() {
   return (
@@ -34,7 +36,8 @@ export default function App() {
               <Route element={<ProfileRequired />}>
                 <Route element={<ProtectedShell />}>
                   <Route path="/" element={<HomePage />} />
-                  <Route path="/scan" element={<PlaceholderPage />} />
+                  <Route path="/scan" element={<ScanPage />} />
+                  <Route path="/review/:step" element={<ReviewPage />} />
                   <Route path="/records" element={<PlaceholderPage />} />
                   <Route path="/reports" element={<PlaceholderPage />} />
                   <Route path="/menu" element={<MenuPage />} />

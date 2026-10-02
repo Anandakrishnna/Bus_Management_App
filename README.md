@@ -16,7 +16,7 @@ Only `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_BASE` are browser-
 
 - Create the owner account through the Supabase dashboard/admin flow. Public signup is intentionally not included in the app.
 - Apply the migration before using the client. It creates the private `sheet-photos` bucket, owner-only RLS policies, `sheet_summary`, monthly report functions, and `save_daily_sheet`.
-- Phase 3 will deploy the `extract-collection-sheet` Edge Function. Configure its vision-model key and model name as Supabase Edge Function secrets only.
+- Deploy `supabase/functions/extract-collection-sheet` as a Supabase Edge Function for Phase 3. Set `OPENAI_API_KEY` and (optionally) `OPENAI_MODEL=gpt-4o-mini` as Edge Function secrets only. Never put either value in a Vite environment file or GitHub Pages variable.
 
 ## Commands
 

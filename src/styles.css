@@ -25,7 +25,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #86b6ff; outline-offs
 .alert-button { justify-self: end; font-size: 20px; }
 .bus-shortcut { justify-self: end; max-width: 115px; overflow: hidden; color: #667085; font-size: 11px; font-weight: 800; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
 .page-content { padding: 20px 16px 24px; }
-.home-page, .placeholder-page { display: grid; gap: 20px; }
+.home-page, .placeholder-page, .scan-page, .review-page { display: grid; gap: 20px; }
 .foundation-banner { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px; border: 1px solid #cfe0ff; border-radius: 14px; color: #254d93; background: #f4f8ff; font-size: 13px; line-height: 1.35; }
 .foundation-banner span { display: grid; width: 18px; height: 18px; place-items: center; flex: none; border-radius: 50%; color: #ffffff; background: #0866ff; font-size: 12px; font-weight: 800; }
 .foundation-banner p { margin: 0; }
@@ -101,6 +101,12 @@ h2 { margin-bottom: 0; color: #13264a; font-size: 16px; letter-spacing: -0.015em
 .menu-list a { display: flex; min-height: 58px; align-items: center; justify-content: space-between; border-bottom: 1px solid #e5e7eb; color: #13264a; font-size: 15px; font-weight: 750; }
 .menu-list a span:last-child { color: #0866ff; font-size: 22px; font-weight: 400; }
 .danger-action { min-height: 48px; padding: 0 14px; border: 1px solid #fecdca; border-radius: 14px; color: #b42318; background: #fffafa; cursor: pointer; font-size: 15px; font-weight: 800; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; clip-path: inset(50%); }
+.scan-page { max-width: 540px; }
+.scan-page h1, .review-page h1 { margin-bottom: 0; }
+.scan-picker { display: grid; min-height: 210px; place-items: center; align-content: center; gap: 9px; padding: 24px; border: 2px dashed #9fc4ff; border-radius: 22px; color: #0756d7; background: #f4f8ff; cursor: pointer; text-align: center; }
+.scan-picker span { font-size: 38px; }.scan-picker strong { font-size: 16px; }.scan-picker small { color: #667085; font-size: 13px; }
+.review-page { max-width: 600px; }.review-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }.review-step { min-height: 42px; display: grid; place-items: center; border-bottom: 2px solid #d0d5dd; color: #667085; font-size: 12px; font-weight: 800; text-transform: capitalize; }.review-step--active { border-color: #0866ff; color: #0866ff; }.review-notice { margin: 0; padding: 11px 12px; border-radius: 12px; color: #7a5300; background: #fff9e8; font-size: 13px; line-height: 1.4; }.review-form { display: grid; gap: 14px; }.review-form label { display: grid; gap: 6px; color: #344054; font-size: 14px; font-weight: 800; }.review-form input, .review-form textarea { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid #d0d5dd; border-radius: 12px; color: #13264a; background: #fff; font-size: 16px; }.review-form textarea { min-height: 88px; resize: vertical; }.review-form em { color: #667085; font-size: 12px; font-style: normal; font-weight: 500; }.expense-row { grid-template-columns: minmax(130px, 1fr) 110px; align-items: center; }.expense-row:has(input:nth-of-type(2)) { grid-template-columns: 1fr 100px; }.expense-row input:nth-of-type(2) { grid-column: 1 / -1; }.text-button { min-height: 44px; border: 0; color: #0866ff; background: transparent; cursor: pointer; font-weight: 800; text-align: left; }.review-summary { display: grid; gap: 8px; padding: 15px; border-radius: 16px; background: #edf4ff; }.review-summary span { display: flex; justify-content: space-between; gap: 12px; color: #254d93; font-size: 14px; }.review-summary strong { color: #13264a; font-variant-numeric: tabular-nums; }
 
 @keyframes spin { to { transform: rotate(1turn); } }
 
