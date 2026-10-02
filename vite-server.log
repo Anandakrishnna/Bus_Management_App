@@ -1,0 +1,18 @@
+
+> busledger@0.1.0 dev
+> vite --host 127.0.0.1 --port 4173 --strictPort
+
+
+  VITE v8.3.2  ready in 834 ms
+
+  ➜  Local:   http://127.0.0.1:4173/
+  ➜  press h + enter to show help
+11:31:19 PM [vite] (client) [optimizer] scanning dependencies...
+11:37:18 PM [vite] (client) hmr update /src/styles.css, /src/components/AppShell.tsx, /src/pages/HomePage.tsx, /src/pages/PlaceholderPage.tsx
+11:38:45 PM [vite] (client) hmr update /src/styles.css, /src/components/AppShell.tsx
+11:38:45 PM [vite] (client) hmr update /src/styles.css, /src/pages/HomePage.tsx
+11:39:01 PM [vite] (client) hmr update /src/App.tsx, /src/styles.css
+11:39:29 PM [vite] (client) hmr update /src/styles.css, /src/components/AppShell.tsx, /src/pages/HomePage.tsx, /src/pages/PlaceholderPage.tsx
+11:39:29 PM [vite] (client) hmr update /src/styles.css, /src/pages/PlaceholderPage.tsx
+11:39:29 PM [vite] (client) hmr update /src/App.tsx, /src/styles.css
+11:40:00 PM [vite] (client) hmr update /src/styles.css
