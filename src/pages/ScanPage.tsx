@@ -8,6 +8,13 @@ import type { CollectionSheetDraft } from '../types/sheet'
 const maxImageBytes = 25 * 1024 * 1024
 const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 
+function withTimeout<T>(request: PromiseLike<T>, message: string): Promise<T> {
+  return Promise.race([
+    Promise.resolve(request),
+    new Promise<T>((_, reject) => window.setTimeout(() => reject(new Error(message)), 45_000)),
+  ])
+}
+
 async function compressImage(file: File): Promise<Blob> {
   const previewUrl = URL.createObjectURL(file)
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -70,7 +77,8 @@ export function ScanPage() {
       previewUrl = URL.createObjectURL(image)
       sessionStorage.setItem('busledger-sheet-photo-preview', previewUrl)
       setProgress('Uploading your private photo…')
-      const { error: uploadError } = await supabase.storage.from('sheet-photos').upload(photoPath, image, { contentType: 'image/jpeg', upsert: false })
+      setProgress('Uploading your private photo…')
+      const { error: uploadError } = await withTimeout(supabase.storage.from('sheet-photos').upload(photoPath, image, { contentType: 'image/jpeg', upsert: false }), 'The photo upload took too long. Check your connection and try again.')
       if (uploadError) throw uploadError
 
       let draft: CollectionSheetDraft = createEmptyDraft(id, photoPath)
@@ -92,13 +100,13 @@ export function ScanPage() {
       <p className="eyebrow">New daily sheet</p>
       <h1 id="scan-title">Scan collection sheet</h1>
       <p className="settings-help">You will check every value before anything is saved.</p>
-      <div className="scan-picker">
+      <div className="scan-picker" aria-live="polite">
         {selectedPreview ? <img alt="Selected collection sheet" className="scan-picker__preview" src={selectedPreview} /> : <span aria-hidden="true">▣</span>}
-        <strong>{progress ?? (selectedPreview ? 'Check this photo before continuing' : 'Choose a collection-sheet photo')}</strong><small>{selectedPreview ? 'Make sure all writing is clear and the entire sheet is visible.' : 'Use the button below to open Camera or Photo Library.'}</small>
+        <strong>{progress ?? (selectedPreview ? 'Check this photo before continuing' : 'Choose a collection-sheet photo')}</strong><small>{progress ? 'Please keep this page open while the photo is processed.' : selectedPreview ? 'Make sure all writing is clear and the entire sheet is visible.' : 'Use the button below to open Camera or Photo Library.'}</small>
+        {error && <p className="scan-picker__error" role="alert">{error}</p>}
       </div>
       <label className="native-picker-label">{selectedPreview ? 'Choose a different photo' : 'Choose photo'}<input accept="image/*,.heic" aria-label="Choose a collection sheet photo" className="native-picker-input" disabled={Boolean(progress)} onChange={(event) => handleFile(event.target.files?.[0])} type="file" /></label>
       {selectedFile && <div className="photo-confirmation"><button className="secondary-action" onClick={retakePhoto} type="button">Retake photo</button><button className="primary-action" disabled={Boolean(progress)} onClick={() => void processSelectedPhoto()} type="button">{progress ?? 'Use this photo'}</button></div>}
-      {error && <p className="form-feedback form-feedback--error" role="alert">{error}</p>}
     </section>
   )
 }
