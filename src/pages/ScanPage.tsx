@@ -6,6 +6,7 @@ import { createEmptyDraft } from '../lib/sheetDraft'
 import type { CollectionSheetDraft } from '../types/sheet'
 
 const maxImageBytes = 25 * 1024 * 1024
+const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 
 async function compressImage(file: File): Promise<Blob> {
   const previewUrl = URL.createObjectURL(file)
@@ -63,7 +64,9 @@ export function ScanPage() {
     let previewUrl: string | null = null
     try {
       setProgress('Preparing your private photo…')
-      const image = await compressImage(file)
+      // iPhone Safari can stall while drawing a captured JPEG to canvas. The
+      // original JPEG is already compatible with private Storage and OCR.
+      const image = isAppleMobile && file.type === 'image/jpeg' ? file : await compressImage(file)
       previewUrl = URL.createObjectURL(image)
       sessionStorage.setItem('busledger-sheet-photo-preview', previewUrl)
       setProgress('Uploading your private photo…')
