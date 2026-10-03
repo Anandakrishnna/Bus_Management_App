@@ -34,14 +34,28 @@ export function ScanPage() {
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState<string | null>(null)
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
-  async function handleFile(file: File | undefined) {
+  function handleFile(file: File | undefined) {
     setError(null)
     if (!file) return
     const selectedUrl = URL.createObjectURL(file)
     setSelectedPreview(selectedUrl)
-    if (!file.type.startsWith('image/')) { setError('This photo format is not supported. Choose a JPEG, PNG, or HEIC image.'); return }
-    if (file.size > maxImageBytes) { setError('Choose an image smaller than 25 MB.'); return }
+    if (!file.type.startsWith('image/')) { setError('This photo format is not supported. Choose a JPEG, PNG, or HEIC image.'); setSelectedFile(null); return }
+    if (file.size > maxImageBytes) { setError('Choose an image smaller than 25 MB.'); setSelectedFile(null); return }
+    setSelectedFile(file)
+  }
+
+  function retakePhoto() {
+    if (selectedPreview) URL.revokeObjectURL(selectedPreview)
+    setSelectedFile(null)
+    setSelectedPreview(null)
+    setError(null)
+  }
+
+  async function processSelectedPhoto() {
+    const file = selectedFile
+    if (!file) return
     if (!supabase || !user) { setError('Your session has ended. Please sign in again.'); return }
 
     const id = crypto.randomUUID()
@@ -77,9 +91,10 @@ export function ScanPage() {
       <p className="settings-help">You will check every value before anything is saved.</p>
       <div className="scan-picker">
         {selectedPreview ? <img alt="Selected collection sheet" className="scan-picker__preview" src={selectedPreview} /> : <span aria-hidden="true">▣</span>}
-        <strong>{progress ?? (selectedPreview ? 'Photo selected' : 'Choose a collection-sheet photo')}</strong><small>{selectedPreview ? 'Preparing your private photo…' : 'Use the button below to open Camera or Photo Library.'}</small>
+        <strong>{progress ?? (selectedPreview ? 'Check this photo before continuing' : 'Choose a collection-sheet photo')}</strong><small>{selectedPreview ? 'Make sure all writing is clear and the entire sheet is visible.' : 'Use the button below to open Camera or Photo Library.'}</small>
       </div>
-      <label className="native-picker-label">Choose photo<input accept="image/*,.heic" aria-label="Choose a collection sheet photo" className="native-picker-input" disabled={Boolean(progress)} onChange={(event) => void handleFile(event.target.files?.[0])} type="file" /></label>
+      <label className="native-picker-label">{selectedPreview ? 'Choose a different photo' : 'Choose photo'}<input accept="image/*,.heic" aria-label="Choose a collection sheet photo" className="native-picker-input" disabled={Boolean(progress)} onChange={(event) => handleFile(event.target.files?.[0])} type="file" /></label>
+      {selectedFile && <div className="photo-confirmation"><button className="secondary-action" onClick={retakePhoto} type="button">Retake photo</button><button className="primary-action" disabled={Boolean(progress)} onClick={() => void processSelectedPhoto()} type="button">{progress ?? 'Use this photo'}</button></div>}
       {error && <p className="form-feedback form-feedback--error" role="alert">{error}</p>}
     </section>
   )
