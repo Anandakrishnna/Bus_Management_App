@@ -59,6 +59,7 @@ h2 { margin-bottom: 0; color: #13264a; font-size: 16px; letter-spacing: -0.015em
 .empty-state { display: grid; gap: 12px; padding-top: 4px; }
 .empty-state__body { display: flex; align-items: center; gap: 14px; padding: 18px 0; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; }
 .empty-state__body p { margin: 0 0 4px; color: #13264a; font-size: 14px; font-weight: 800; }
+.home-record-row { display: grid; gap: 4px; padding: 14px 0; border-top: 1px solid #e5e7eb; }.home-record-row strong { color: #13264a; font-size: 15px; }.home-record-row span { color: #667085; font-size: 13px; font-variant-numeric: tabular-nums; }
 .empty-icon, .placeholder-icon { display: grid; width: 44px; height: 44px; place-items: center; flex: none; border-radius: 14px; color: #0866ff; background: #edf4ff; font-size: 23px; }
 .bottom-nav { position: fixed; z-index: 10; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 760px; margin: auto; min-height: 76px; padding: 6px 10px env(safe-area-inset-bottom); border-top: 1px solid #e5e7eb; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); }
 .nav-item { display: grid; min-height: 62px; place-items: center; align-content: center; gap: 2px; color: #7a8495; font-size: 11px; font-weight: 700; }

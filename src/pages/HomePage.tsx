@@ -1,11 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { monthStart, nextMonthStart } from '../lib/month'
 import { formatRupees } from '../lib/money'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { useBusProfile } from '../contexts/BusProfileContext'
 import { strings } from '../strings'
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+type MonthlySummary = { total_collection: number; total_operating_expense: number; operating_balance: number; days_entered: number }
+type RecentSheet = { id: string; sheet_date: string; collection: number; daily_balance: number }
 
 function getGreeting(): string {
   const hour = new Date().getHours()
@@ -20,8 +23,23 @@ export function HomePage() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
   const selectedMonthLabel = months[selectedMonth]
   const selectedYear = new Date().getFullYear()
-  const monthBalance = 0
+  const selectedMonthKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`
+  const [summary, setSummary] = useState<MonthlySummary>({ total_collection: 0, total_operating_expense: 0, operating_balance: 0, days_entered: 0 })
+  const [recentSheets, setRecentSheets] = useState<RecentSheet[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
   const daysInMonth = useMemo(() => new Date(selectedYear, selectedMonth + 1, 0).getDate(), [selectedMonth, selectedYear])
+  const loadMonth = useCallback(async () => {
+    if (!supabase) return
+    setLoadError(null)
+    const [summaryResult, sheetsResult] = await Promise.all([
+      supabase.rpc('get_monthly_summary', { p_month: monthStart(selectedMonthKey) }),
+      supabase.from('sheet_summary').select('id, sheet_date, collection, daily_balance').gte('sheet_date', monthStart(selectedMonthKey)).lt('sheet_date', nextMonthStart(selectedMonthKey)).order('sheet_date', { ascending: false }).limit(3),
+    ])
+    if (summaryResult.error || sheetsResult.error) { setLoadError(summaryResult.error?.message ?? sheetsResult.error?.message ?? 'We could not load this month.'); return }
+    setSummary((summaryResult.data?.[0] ?? { total_collection: 0, total_operating_expense: 0, operating_balance: 0, days_entered: 0 }) as MonthlySummary)
+    setRecentSheets((sheetsResult.data ?? []) as RecentSheet[])
+  }, [selectedMonthKey])
+  useEffect(() => { void Promise.resolve().then(loadMonth) }, [loadMonth])
 
   return (
     <section className="home-page" aria-labelledby="home-title">
@@ -51,22 +69,22 @@ export function HomePage() {
 
       <section className="summary-card" aria-label={`${selectedMonthLabel} operating balance`}>
         <p>{strings.operatingBalance}</p>
-        <strong>{formatRupees(monthBalance)}</strong>
+        <strong>{formatRupees(summary.operating_balance)}</strong>
         <span>{selectedMonthLabel} {selectedYear}</span>
       </section>
 
       <dl className="supporting-totals">
         <div>
           <dt>{strings.totalCollection}</dt>
-          <dd>{formatRupees(0)}</dd>
+          <dd>{formatRupees(summary.total_collection)}</dd>
         </div>
         <div>
           <dt>{strings.totalExpense}</dt>
-          <dd>{formatRupees(0)}</dd>
+          <dd>{formatRupees(summary.total_operating_expense)}</dd>
         </div>
         <div>
           <dt>{strings.daysEntered}</dt>
-          <dd>0 / {daysInMonth}</dd>
+          <dd>{summary.days_entered} / {daysInMonth}</dd>
         </div>
       </dl>
 
@@ -100,13 +118,15 @@ export function HomePage() {
           <h2 id="recent-sheets-title">{strings.recentSheets}</h2>
           <Link to="/records">View all</Link>
         </div>
-        <div className="empty-state__body">
+        {loadError && <p className="form-feedback form-feedback--error" role="alert">{loadError}</p>}
+        {!loadError && recentSheets.length === 0 && <div className="empty-state__body">
           <span className="empty-icon" aria-hidden="true">▤</span>
           <div>
             <p>{strings.noSheets}</p>
             <span>{strings.noSheetsHelp}</span>
           </div>
-        </div>
+        </div>}
+        {!loadError && recentSheets.map((sheet) => <Link className="home-record-row" key={sheet.id} to={`/sheets/${sheet.id}`}><strong>{new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(`${sheet.sheet_date}T00:00:00`))}</strong><span>Collection {formatRupees(sheet.collection)} · Balance {formatRupees(sheet.daily_balance)}</span></Link>)}
       </section>
     </section>
   )
