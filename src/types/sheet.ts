@@ -1,5 +1,5 @@
 export const standardExpenseCategories = [
-  'batha_driver', 'batha_conductor', 'batha_checker', 'batha_cleaner', 'diesel',
+  'batha_driver', 'batha_conductor', 'batha_cleaner', 'diesel',
   'oil_grease', 'tyre', 'spare_parts', 'workshop', 'stand_fee', 'washing',
 ] as const
 
@@ -14,7 +14,6 @@ export type CollectionSheetDraft = {
   sheetDate: string
   driverName: string
   conductorName: string
-  checkerName: string
   cleanerName: string
   expenses: DraftExpense[]
   collection: number | null

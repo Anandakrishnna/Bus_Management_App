@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { createEmptyDraft, normalizeSheetDate, totalDraftExpenses, validateDraft } from './sheetDraft'
+import { createEmptyDraft, getExpenseLabel, normalizeSheetDate, totalDraftExpenses, validateDraft } from './sheetDraft'
 
 describe('collection-sheet drafts', () => {
   it('creates an editable draft with every standard expense row', () => {
     const draft = createEmptyDraft('sheet-id', 'owner-id/sheet-id.jpg')
-    expect(draft.expenses).toHaveLength(11)
+    expect(draft.expenses).toHaveLength(10)
+    expect(draft).not.toHaveProperty('checkerName')
+    expect(getExpenseLabel('batha_driver')).toBe('Bette (wage) — Driver')
     expect(draft.collection).toBeNull()
   })
 

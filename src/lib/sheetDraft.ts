@@ -1,7 +1,7 @@
 import { standardExpenseCategories, type CollectionSheetDraft, type DraftExpense } from '../types/sheet'
 
 const expenseLabels: Record<string, string> = {
-  batha_driver: 'Batha — Driver', batha_conductor: 'Batha — Conductor', batha_checker: 'Batha — Checker', batha_cleaner: 'Batha — Cleaner',
+  batha_driver: 'Bette (wage) — Driver', batha_conductor: 'Bette (wage) — Conductor', batha_cleaner: 'Bette (wage) — Cleaner',
   diesel: 'Diesel', oil_grease: 'Oil / Grease', tyre: 'Tyre', spare_parts: 'Spare parts', workshop: 'Workshop', stand_fee: 'Stand fee', washing: 'Washing', others: 'Others',
 }
 
@@ -9,7 +9,7 @@ export function getExpenseLabel(category: DraftExpense['category']): string { re
 
 export function createEmptyDraft(id: string, photoPath: string): CollectionSheetDraft {
   return {
-    id, photoPath, sheetDate: new Date().toISOString().slice(0, 10), driverName: '', conductorName: '', checkerName: '', cleanerName: '',
+    id, photoPath, sheetDate: new Date().toISOString().slice(0, 10), driverName: '', conductorName: '', cleanerName: '',
     expenses: standardExpenseCategories.map((category) => ({ category, amount: null, note: '' })),
     collection: null, writtenTotal: null, writtenBalance: null, notes: '', needsReview: ['all values'],
   }
