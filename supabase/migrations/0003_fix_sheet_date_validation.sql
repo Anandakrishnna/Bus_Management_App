@@ -40,18 +40,18 @@ begin
   if sheet_day > current_date then
     raise exception 'sheet date cannot be in the future' using errcode = '22023';
   end if;
-  if coalesce(p_sheet ->> 'collection', '') !~ '^\d+$' then
+  if coalesce(p_sheet ->> 'collection', '') !~ '^[0-9]+$' then
     raise exception 'collection must be a non-negative whole number of rupees' using errcode = '22023';
   end if;
   collection_value := (p_sheet ->> 'collection')::integer;
   if p_sheet ? 'written_total' and p_sheet ->> 'written_total' is not null and p_sheet ->> 'written_total' <> '' then
-    if p_sheet ->> 'written_total' !~ '^\d+$' then
+    if p_sheet ->> 'written_total' !~ '^[0-9]+$' then
       raise exception 'written total must be a non-negative whole number of rupees' using errcode = '22023';
     end if;
     written_total_value := (p_sheet ->> 'written_total')::integer;
   end if;
   if p_sheet ? 'written_balance' and p_sheet ->> 'written_balance' is not null and p_sheet ->> 'written_balance' <> '' then
-    if p_sheet ->> 'written_balance' !~ '^-?\d+$' then
+    if p_sheet ->> 'written_balance' !~ '^-?[0-9]+$' then
       raise exception 'written balance must be a whole number of rupees' using errcode = '22023';
     end if;
     written_balance_value := (p_sheet ->> 'written_balance')::integer;
@@ -107,7 +107,7 @@ begin
     if expense_category <> 'others' and expense_category = any(seen_categories) then
       raise exception 'each standard expense category can be entered once' using errcode = '22023';
     end if;
-    if coalesce(expense ->> 'amount', '') !~ '^\d+$' then
+    if coalesce(expense ->> 'amount', '') !~ '^[0-9]+$' then
       raise exception 'expense amount must be a non-negative whole number of rupees' using errcode = '22023';
     end if;
     expense_amount := (expense ->> 'amount')::integer;
