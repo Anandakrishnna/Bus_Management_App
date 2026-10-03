@@ -104,8 +104,8 @@ h2 { margin-bottom: 0; color: #13264a; font-size: 16px; letter-spacing: -0.015em
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; clip-path: inset(50%); }
 .scan-page { max-width: 540px; }
 .scan-page h1, .review-page h1 { margin-bottom: 0; }
-.scan-picker { position: relative; display: grid; min-height: 210px; place-items: center; align-content: center; gap: 9px; padding: 24px; border: 2px dashed #9fc4ff; border-radius: 22px; color: #0756d7; background: #f4f8ff; cursor: pointer; text-align: center; }
-.scan-picker__input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; cursor: pointer; opacity: 0; }
+.scan-picker { display: grid; min-height: 210px; place-items: center; align-content: center; gap: 9px; padding: 24px; border: 2px dashed #9fc4ff; border-radius: 22px; color: #0756d7; background: #f4f8ff; text-align: center; }
+.native-picker-label { display: grid; gap: 8px; color: #13264a; font-size: 14px; font-weight: 800; }.native-picker-input { width: 100%; min-height: 48px; padding: 10px; border: 1px solid #9fc4ff; border-radius: 12px; color: #0756d7; background: #fff; font: inherit; }
 .scan-picker span { font-size: 38px; }.scan-picker strong { font-size: 16px; }.scan-picker small { color: #667085; font-size: 13px; }
 .scan-picker__preview { width: 100%; max-height: 190px; border-radius: 12px; object-fit: contain; background: #fff; }
 .sheet-photo { display: grid; gap: 8px; color: #0756d7; font-size: 13px; font-weight: 800; }.sheet-photo img { display: block; width: 100%; max-height: 260px; border: 1px solid #d0d5dd; border-radius: 16px; object-fit: contain; background: #f7faff; }

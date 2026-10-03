@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { createEmptyDraft } from '../lib/sheetDraft'
 import type { CollectionSheetDraft } from '../types/sheet'
 
-const maxImageBytes = 10 * 1024 * 1024
+const maxImageBytes = 25 * 1024 * 1024
 
 async function compressImage(file: File): Promise<Blob> {
   const previewUrl = URL.createObjectURL(file)
@@ -38,16 +38,16 @@ export function ScanPage() {
   async function handleFile(file: File | undefined) {
     setError(null)
     if (!file) return
-    if (!file.type.startsWith('image/')) { setError('Choose a JPEG, PNG, or another image file.'); return }
-    if (file.size > maxImageBytes) { setError('Choose an image smaller than 10 MB.'); return }
+    const selectedUrl = URL.createObjectURL(file)
+    setSelectedPreview(selectedUrl)
+    if (!file.type.startsWith('image/')) { setError('This photo format is not supported. Choose a JPEG, PNG, or HEIC image.'); return }
+    if (file.size > maxImageBytes) { setError('Choose an image smaller than 25 MB.'); return }
     if (!supabase || !user) { setError('Your session has ended. Please sign in again.'); return }
 
     const id = crypto.randomUUID()
     const photoPath = `${user.id}/${id}.jpg`
     let previewUrl: string | null = null
     try {
-      const selectedUrl = URL.createObjectURL(file)
-      setSelectedPreview(selectedUrl)
       setProgress('Preparing your private photo…')
       const image = await compressImage(file)
       previewUrl = URL.createObjectURL(image)
@@ -75,11 +75,11 @@ export function ScanPage() {
       <p className="eyebrow">New daily sheet</p>
       <h1 id="scan-title">Scan collection sheet</h1>
       <p className="settings-help">You will check every value before anything is saved.</p>
-      <label className="scan-picker">
-        <input accept="image/*" aria-label="Take a photo or choose a collection sheet from your gallery" className="scan-picker__input" disabled={Boolean(progress)} onChange={(event) => void handleFile(event.target.files?.[0])} type="file" />
+      <div className="scan-picker">
         {selectedPreview ? <img alt="Selected collection sheet" className="scan-picker__preview" src={selectedPreview} /> : <span aria-hidden="true">▣</span>}
-        <strong>{progress ?? (selectedPreview ? 'Photo selected' : 'Take photo or choose from gallery')}</strong><small>{selectedPreview ? 'Preparing your private photo…' : 'Choose Camera or Photo Library. JPEG is compressed privately before review.'}</small>
-      </label>
+        <strong>{progress ?? (selectedPreview ? 'Photo selected' : 'Choose a collection-sheet photo')}</strong><small>{selectedPreview ? 'Preparing your private photo…' : 'Use the button below to open Camera or Photo Library.'}</small>
+      </div>
+      <label className="native-picker-label">Choose photo<input accept="image/*,.heic" aria-label="Choose a collection sheet photo" className="native-picker-input" disabled={Boolean(progress)} onChange={(event) => void handleFile(event.target.files?.[0])} type="file" /></label>
       {error && <p className="form-feedback form-feedback--error" role="alert">{error}</p>}
     </section>
   )
