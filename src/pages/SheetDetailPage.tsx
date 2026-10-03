@@ -14,9 +14,11 @@ export function SheetDetailPage() {
     let active = true
     async function load() {
       if (!supabase || !id) return
-      const { data, error: requestError } = await supabase.from('sheet_summary').select('id, sheet_date, collection, total_operating_expense, daily_balance, written_total, written_balance, total_mismatch, balance_mismatch, photo_path, driver_name, conductor_name, checker_name, cleaner_name, notes').eq('id', id).maybeSingle()
+      const { data, error: requestError } = await supabase.from('sheet_summary').select('id, sheet_date, collection, total_operating_expense, daily_balance, written_total, written_balance, total_mismatch, balance_mismatch, photo_path').eq('id', id).maybeSingle()
       if (requestError || !data) { if (active) setError('We could not load this sheet.'); return }
-      const record = data as SheetDetail
+      const { data: details, error: detailsError } = await supabase.from('daily_sheets').select('driver_name, conductor_name, checker_name, cleaner_name, notes').eq('id', id).maybeSingle()
+      if (detailsError || !details) { if (active) setError('We could not load this sheet.'); return }
+      const record = { ...data, ...details } as SheetDetail
       const { data: signedPhoto } = await supabase.storage.from('sheet-photos').createSignedUrl(record.photo_path, 300)
       if (active) { setSheet(record); setPhotoUrl(signedPhoto?.signedUrl ?? null) }
     }
