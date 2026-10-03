@@ -8,6 +8,14 @@ import type { CollectionSheetDraft } from '../types/sheet'
 const maxImageBytes = 25 * 1024 * 1024
 const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 
+function createSheetId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+    const value = Math.floor(Math.random() * 16)
+    return (character === 'x' ? value : (value & 0x3) | 0x8).toString(16)
+  })
+}
+
 function withTimeout<T>(request: PromiseLike<T>, message: string): Promise<T> {
   return Promise.race([
     Promise.resolve(request),
@@ -66,10 +74,10 @@ export function ScanPage() {
     if (!file) return
     if (!supabase || !user) { setError('Your session has ended. Please sign in again.'); return }
 
-    const id = crypto.randomUUID()
-    const photoPath = `${user.id}/${id}.jpg`
     let previewUrl: string | null = null
     try {
+      const id = createSheetId()
+      const photoPath = `${user.id}/${id}.jpg`
       setProgress('Preparing your private photo…')
       // iPhone Safari can stall while drawing a captured JPEG to canvas. The
       // original JPEG is already compatible with private Storage and OCR.
