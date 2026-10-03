@@ -56,7 +56,7 @@ export function ReviewPage() {
     })
     setSaving(false)
     if (saveError) { setError(saveError.message); return }
-    sessionStorage.removeItem('busledger-sheet-draft'); sessionStorage.removeItem('busledger-sheet-photo-preview'); navigate('/')
+    sessionStorage.removeItem('busledger-sheet-draft'); sessionStorage.removeItem('busledger-sheet-photo-preview'); navigate(`/sheets/${payload.id}`)
   }
   return (
     <section className="review-page" aria-labelledby="review-title">
