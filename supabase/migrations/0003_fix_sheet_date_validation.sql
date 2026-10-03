@@ -7,6 +7,7 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+<<sheet_save>>
 declare
   caller uuid := auth.uid();
   sheet_id uuid;
@@ -94,7 +95,7 @@ begin
     photo_path = excluded.photo_path
   where public.daily_sheets.owner_id = caller;
 
-  delete from public.sheet_expenses where sheet_expenses.sheet_id = sheet_id and sheet_expenses.owner_id = caller;
+  delete from public.sheet_expenses where sheet_expenses.sheet_id = sheet_save.sheet_id and sheet_expenses.owner_id = caller;
   for expense in select value from jsonb_array_elements(p_expenses)
   loop
     expense_category := expense ->> 'category';
@@ -118,7 +119,7 @@ begin
     seen_categories := array_append(seen_categories, expense_category);
   end loop;
 
-  return (select summary from public.sheet_summary summary where summary.id = sheet_id);
+  return (select summary from public.sheet_summary summary where summary.id = sheet_save.sheet_id);
 end;
 $$;
 
