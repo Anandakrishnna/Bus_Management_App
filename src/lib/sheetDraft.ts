@@ -5,7 +5,7 @@ const expenseLabels: Record<string, string> = {
   diesel: 'Diesel', oil_grease: 'Oil / Grease', tyre: 'Tyre', spare_parts: 'Spare parts', workshop: 'Workshop', stand_fee: 'Stand fee', washing: 'Washing', others: 'Others',
 }
 
-export function getExpenseLabel(category: DraftExpense['category']): string { return expenseLabels[category] }
+export function getExpenseLabel(category: DraftExpense['category'] | string): string { return expenseLabels[category] ?? category.replace(/_/g, ' ') }
 
 export function createEmptyDraft(id: string, photoPath: string): CollectionSheetDraft {
   return {
