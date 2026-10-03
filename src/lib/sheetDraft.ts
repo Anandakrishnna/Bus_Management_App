@@ -19,8 +19,18 @@ export function totalDraftExpenses(expenses: readonly DraftExpense[]): number {
   return expenses.reduce((total, expense) => total + (expense.amount ?? 0), 0)
 }
 
+export function normalizeSheetDate(value: string, fallback: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  const match = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/)
+  if (!match) return fallback
+  const [, day, month, rawYear] = match
+  const year = rawYear.length === 2 ? `20${rawYear}` : rawYear
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+}
+
 export function validateDraft(draft: CollectionSheetDraft): string | null {
-  if (!draft.sheetDate || draft.sheetDate > new Date().toISOString().slice(0, 10)) return 'Choose a sheet date that is not in the future.'
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.sheetDate)) return 'Choose a valid sheet date.'
+  if (draft.sheetDate > new Date().toISOString().slice(0, 10)) return 'Choose a sheet date that is not in the future.'
   if (draft.collection === null || !Number.isInteger(draft.collection) || draft.collection < 0) return 'Enter the collection as a whole number of rupees.'
   if (draft.expenses.some((expense) => expense.amount !== null && (!Number.isInteger(expense.amount) || expense.amount < 0))) return 'Expense values must be non-negative whole rupees.'
   return null

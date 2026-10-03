@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { createEmptyDraft } from '../lib/sheetDraft'
+import { createEmptyDraft, normalizeSheetDate } from '../lib/sheetDraft'
 import type { CollectionSheetDraft } from '../types/sheet'
 
 const maxImageBytes = 25 * 1024 * 1024
@@ -92,7 +92,7 @@ export function ScanPage() {
       let draft: CollectionSheetDraft = createEmptyDraft(id, photoPath)
       setProgress('Reading the sheet…')
       const { data, error: extractionError } = await supabase.functions.invoke('extract-collection-sheet', { body: { photoPath } })
-      if (!extractionError && data?.draft) draft = { ...draft, ...data.draft, id, photoPath }
+      if (!extractionError && data?.draft) draft = { ...draft, ...data.draft, sheetDate: normalizeSheetDate(data.draft.sheetDate ?? '', draft.sheetDate), id, photoPath }
       if (extractionError || !data?.draft) draft.needsReview = ['OCR could not read this photo. Enter the values manually, then save the verified sheet.']
       sessionStorage.setItem('busledger-sheet-draft', JSON.stringify(draft))
       navigate('/review/details')

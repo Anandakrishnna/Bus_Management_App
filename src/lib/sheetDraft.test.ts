@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createEmptyDraft, totalDraftExpenses, validateDraft } from './sheetDraft'
+import { createEmptyDraft, normalizeSheetDate, totalDraftExpenses, validateDraft } from './sheetDraft'
 
 describe('collection-sheet drafts', () => {
   it('creates an editable draft with every standard expense row', () => {
@@ -10,6 +10,11 @@ describe('collection-sheet drafts', () => {
 
   it('calculates preview totals while treating blank values as zero', () => {
     expect(totalDraftExpenses([{ category: 'diesel', amount: 5350, note: '' }, { category: 'others', amount: null, note: '' }])).toBe(5350)
+  })
+
+  it('normalizes paper-style OCR dates for the database', () => {
+    expect(normalizeSheetDate('18/07/2026', '2026-10-03')).toBe('2026-07-18')
+    expect(normalizeSheetDate('2026-07-18', '2026-10-03')).toBe('2026-07-18')
   })
 
   it('requires a non-future date and whole-rupee collection before saving', () => {
