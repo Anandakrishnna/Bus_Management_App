@@ -6,7 +6,7 @@ import { BusProfileProvider } from './contexts/BusProfileContext'
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage, SignUpPage } from './pages/AuthPages'
 import { HomePage } from './pages/HomePage'
 import { MenuPage } from './pages/MenuPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
+import { HelpPage } from './pages/HelpPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SetupPage } from './pages/SetupPage'
 import { ScanPage } from './pages/ScanPage'
@@ -47,7 +47,7 @@ export default function App() {
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/menu" element={<MenuPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/help" element={<PlaceholderPage />} />
+                  <Route path="/help" element={<HelpPage />} />
                 </Route>
               </Route>
             </Route>
