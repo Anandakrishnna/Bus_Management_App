@@ -3,7 +3,7 @@ import { AppShell } from './components/AppShell'
 import { ConfiguredOnly, ProfileRequired, SignedInOnly, SetupOnly } from './components/AccessGate'
 import { AuthProvider } from './contexts/AuthContext'
 import { BusProfileProvider } from './contexts/BusProfileContext'
-import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from './pages/AuthPages'
+import { ForgotPasswordPage, LoginPage, ResetPasswordPage, SignUpPage } from './pages/AuthPages'
 import { HomePage } from './pages/HomePage'
 import { MenuPage } from './pages/MenuPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
@@ -30,6 +30,7 @@ export default function App() {
         <Routes>
           <Route element={<ConfiguredOnly />}>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/sign-up" element={<SignUpPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route element={<SignedInOnly />}>

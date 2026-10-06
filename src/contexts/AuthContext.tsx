@@ -8,6 +8,7 @@ type AuthContextValue = {
   session: Session | null
   user: User | null
   signIn: (email: string, password: string) => Promise<string | null>
+  signUp: (email: string, password: string) => Promise<string | null>
   sendPasswordReset: (email: string) => Promise<string | null>
   updatePassword: (password: string) => Promise<string | null>
   signOut: () => Promise<string | null>
@@ -17,6 +18,10 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 function getResetRedirectUrl(): string {
   return `${window.location.origin}${import.meta.env.BASE_URL}#/reset-password`
+}
+
+function getSignUpRedirectUrl(): string {
+  return new URL(import.meta.env.BASE_URL, window.location.origin).toString()
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -53,6 +58,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async signIn(email, password) {
       if (!supabase) return 'Supabase is not configured yet.'
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+      return error?.message ?? null
+    },
+    async signUp(email, password) {
+      if (!supabase) return 'Supabase is not configured yet.'
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { emailRedirectTo: getSignUpRedirectUrl() },
+      })
       return error?.message ?? null
     },
     async sendPasswordReset(email) {

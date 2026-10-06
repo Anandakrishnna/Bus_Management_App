@@ -63,6 +63,61 @@ export function LoginPage() {
         <button className="primary-action" disabled={isSubmitting} type="submit">{isSubmitting ? strings.signInProgress : strings.signIn}</button>
       </form>
       <Link className="quiet-link" to="/forgot-password">{strings.forgotPassword}</Link>
+      <Link className="quiet-link" to="/sign-up">{strings.createAccountPrompt}</Link>
+    </AuthForm>
+  )
+}
+
+export function SignUpPage() {
+  const { isLoading, signUp, user } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  if (isLoading) return <AppLoading />
+  if (user) return <Navigate replace to="/setup" />
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+    setSuccess(null)
+    if (password.length < 8) {
+      setError(strings.passwordLengthError)
+      return
+    }
+    if (password !== confirmation) {
+      setError(strings.passwordMatchError)
+      return
+    }
+    setIsSubmitting(true)
+    const message = await signUp(email, password)
+    setIsSubmitting(false)
+    if (message) setError(message)
+    else setSuccess(strings.accountCreated)
+  }
+
+  return (
+    <AuthForm help={strings.createAccountHelp} title={strings.createAccount}>
+      <form className="auth-form" onSubmit={(event) => void handleSubmit(event)}>
+        <label>
+          <span>{strings.emailAddress}</span>
+          <input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
+        </label>
+        <label>
+          <span>{strings.password}</span>
+          <input autoComplete="new-password" minLength={8} onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />
+        </label>
+        <label>
+          <span>{strings.confirmPassword}</span>
+          <input autoComplete="new-password" minLength={8} onChange={(event) => setConfirmation(event.target.value)} required type="password" value={confirmation} />
+        </label>
+        <AuthFeedback error={error} success={success} />
+        <button className="primary-action" disabled={isSubmitting} type="submit">{isSubmitting ? strings.createAccountProgress : strings.createAccount}</button>
+      </form>
+      <Link className="quiet-link" to="/login">{strings.alreadyHaveAccount}</Link>
     </AuthForm>
   )
 }
