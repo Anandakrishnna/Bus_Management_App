@@ -10,7 +10,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        registerType: 'prompt',
+        // A phone can keep an earlier app shell in its service-worker cache.
+        // Activate each new release automatically so an owner never returns to
+        // an obsolete "Foundation" screen after we deploy a production fix.
+        registerType: 'autoUpdate',
         manifest: {
           name: 'BusLedger',
           short_name: 'BusLedger',
