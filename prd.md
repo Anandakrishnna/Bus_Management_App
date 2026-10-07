@@ -212,7 +212,9 @@ Do not label Operating Balance as profit. Fixed costs and other owner expenses a
 
 - Email/password login through Supabase Auth.
 - Session restoration, sign out, and password reset.
-- Public signups disabled after the owner account is created.
+- Public owner signup collects owner name, vehicle name, Indian phone number, email, and password.
+- New owner email addresses must be verified with the Supabase email OTP before bus setup or sign-in access.
+- Each verified owner completes setup for one bus; later sign-ins use email and password.
 - All app routes except authentication/reset routes are protected.
 
 ### Image extraction
@@ -381,7 +383,8 @@ tests/
 
 ### Phase 2 — Owner access and one-bus setup
 
-- Sign in, password reset, session handling, protected routes
+- Public sign-up, email OTP verification/resend, sign in, password reset, session handling, protected routes
+- Persist owner name, phone number, and vehicle name with the one-bus profile
 - Initial one-bus profile setup and small settings editor
 
 ### Phase 3 — Scan and daily-sheet review

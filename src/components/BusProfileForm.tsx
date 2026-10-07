@@ -7,11 +7,12 @@ type BusProfileFormProps = {
   initialValue?: BusProfileInput
   onSave: (input: BusProfileInput) => Promise<string | null>
   submitLabel: string
+  requireContactDetails?: boolean
 }
 
-const blankProfile: BusProfileInput = { registrationNumber: '', name: '', route: '' }
+const blankProfile: BusProfileInput = { registrationNumber: '', ownerName: '', phoneNumber: '', name: '', route: '' }
 
-export function BusProfileForm({ initialValue = blankProfile, onSave, submitLabel }: BusProfileFormProps) {
+export function BusProfileForm({ initialValue = blankProfile, onSave, submitLabel, requireContactDetails = false }: BusProfileFormProps) {
   const [form, setForm] = useState<BusProfileInput>(initialValue)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -25,7 +26,7 @@ export function BusProfileForm({ initialValue = blankProfile, onSave, submitLabe
     event.preventDefault()
     setError(null)
     setSuccess(null)
-    const validationError = validateBusProfile(form)
+    const validationError = validateBusProfile(form, requireContactDetails)
     if (validationError) {
       setError(validationError)
       return
@@ -40,11 +41,19 @@ export function BusProfileForm({ initialValue = blankProfile, onSave, submitLabe
   return (
     <form className="profile-form" onSubmit={(event) => void handleSubmit(event)}>
       <label>
+        <span>Owner name{requireContactDetails && <em>Required</em>}</span>
+        <input autoComplete="name" onChange={(event) => updateField('ownerName', event.target.value)} required={requireContactDetails} value={form.ownerName} />
+      </label>
+      <label>
+        <span>Phone number{requireContactDetails && <em>Required</em>}</span>
+        <input autoComplete="tel" inputMode="tel" onChange={(event) => updateField('phoneNumber', event.target.value)} required={requireContactDetails} type="tel" value={form.phoneNumber} />
+      </label>
+      <label>
         <span>{strings.registrationNumber}</span>
         <input autoCapitalize="characters" autoComplete="off" maxLength={13} onChange={(event) => updateField('registrationNumber', event.target.value)} placeholder="KL10Q8081" required value={form.registrationNumber} />
       </label>
       <label>
-        <span>{strings.displayName} <em>{strings.optional}</em></span>
+        <span>{strings.vehicleName} <em>{strings.optional}</em></span>
         <input autoComplete="off" onChange={(event) => updateField('name', event.target.value)} value={form.name} />
       </label>
       <label>

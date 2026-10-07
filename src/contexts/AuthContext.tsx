@@ -8,7 +8,9 @@ type AuthContextValue = {
   session: Session | null
   user: User | null
   signIn: (email: string, password: string) => Promise<string | null>
-  signUp: (email: string, password: string) => Promise<string | null>
+  signUp: (email: string, password: string, profile: SignUpProfile) => Promise<string | null>
+  verifySignUpOtp: (email: string, token: string) => Promise<string | null>
+  resendSignUpOtp: (email: string) => Promise<string | null>
   sendPasswordReset: (email: string) => Promise<string | null>
   updatePassword: (password: string) => Promise<string | null>
   signOut: () => Promise<string | null>
@@ -19,6 +21,8 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 function getResetRedirectUrl(): string {
   return `${window.location.origin}${import.meta.env.BASE_URL}#/reset-password`
 }
+
+export type SignUpProfile = { ownerName: string; phoneNumber: string; vehicleName: string }
 
 function getSignUpRedirectUrl(): string {
   return new URL(import.meta.env.BASE_URL, window.location.origin).toString()
@@ -65,16 +69,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return error?.message ?? null
       } catch { return 'Could not sign in. Check your connection and try again.' }
     },
-    async signUp(email, password) {
+    async signUp(email, password, profile) {
       if (!supabase) return 'Supabase is not configured yet.'
       try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { emailRedirectTo: getSignUpRedirectUrl() },
+        options: {
+          emailRedirectTo: getSignUpRedirectUrl(),
+          data: { owner_name: profile.ownerName.trim(), phone_number: profile.phoneNumber.trim(), vehicle_name: profile.vehicleName.trim() },
+        },
       })
-      return error?.message ?? null
+      if (error) return error.message
+      if (data.session) {
+        await supabase.auth.signOut()
+        return 'Email verification is disabled in this Supabase project. Enable email confirmations and configure the confirmation email to include the six-digit code, then try again.'
+      }
+      return null
       } catch { return 'Could not create your account. Check your connection and try again.' }
+    },
+    async verifySignUpOtp(email, token) {
+      if (!supabase) return 'Supabase is not configured yet.'
+      try {
+        const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: token.trim(), type: 'signup' })
+        return error?.message ?? null
+      } catch { return 'Could not verify the code. Check your connection and try again.' }
+    },
+    async resendSignUpOtp(email) {
+      if (!supabase) return 'Supabase is not configured yet.'
+      try {
+        const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: getSignUpRedirectUrl() } })
+        return error?.message ?? null
+      } catch { return 'Could not resend the code. Check your connection and try again.' }
     },
     async sendPasswordReset(email) {
       if (!supabase) return 'Supabase is not configured yet.'

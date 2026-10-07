@@ -34,7 +34,7 @@ export function BusProfileProvider({ children }: { children: ReactNode }) {
     try {
     const { data, error: requestError } = await supabase
       .from('bus_profile')
-      .select('owner_id, registration_number, name, route, created_at, updated_at')
+      .select('owner_id, registration_number, name, owner_name, phone_number, route, created_at, updated_at')
       .maybeSingle()
 
     if (requestError) {
@@ -69,6 +69,8 @@ export function BusProfileProvider({ children }: { children: ReactNode }) {
       owner_id: user.id,
       registration_number: normalized.registrationNumber,
       name: normalized.name || null,
+      owner_name: normalized.ownerName || null,
+      phone_number: normalized.phoneNumber || null,
       route: normalized.route || null,
     })
 

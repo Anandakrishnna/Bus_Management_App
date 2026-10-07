@@ -8,6 +8,8 @@ create table public.bus_profile (
   owner_id uuid primary key references auth.users(id) on delete cascade,
   registration_number text not null check (char_length(trim(registration_number)) > 0),
   name text,
+  owner_name text,
+  phone_number text,
   route text,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())

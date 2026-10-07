@@ -1,8 +1,11 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Link, Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { strings } from '../strings'
 import { AppLoading } from '../components/AppLoading'
+import { validateOwnerContact } from '../lib/profile'
+
+const pendingSignUpEmailKey = 'busledger-pending-signup-email'
 
 type AuthFormProps = {
   title: string
@@ -64,12 +67,17 @@ export function LoginPage() {
       </form>
       <Link className="quiet-link" to="/forgot-password">{strings.forgotPassword}</Link>
       <Link className="quiet-link" to="/sign-up">{strings.createAccountPrompt}</Link>
+      <Link className="quiet-link" to="/verify-email">Already have a verification code?</Link>
     </AuthForm>
   )
 }
 
 export function SignUpPage() {
   const { isLoading, signUp, user } = useAuth()
+  const navigate = useNavigate()
+  const [ownerName, setOwnerName] = useState('')
+  const [vehicleName, setVehicleName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
@@ -92,16 +100,27 @@ export function SignUpPage() {
       setError(strings.passwordMatchError)
       return
     }
+    const contactError = validateOwnerContact(ownerName, phoneNumber)
+    if (contactError) { setError(contactError); return }
+    if (!vehicleName.trim()) { setError('Enter the vehicle name.'); return }
     setIsSubmitting(true)
-    const message = await signUp(email, password)
-    setIsSubmitting(false)
-    if (message) setError(message)
-    else setSuccess(strings.accountCreated)
+    try {
+      const message = await signUp(email, password, { ownerName, phoneNumber, vehicleName })
+      if (message) setError(message)
+      else {
+        sessionStorage.setItem(pendingSignUpEmailKey, email.trim())
+        setSuccess(strings.accountCreated)
+        navigate('/verify-email')
+      }
+    } finally { setIsSubmitting(false) }
   }
 
   return (
     <AuthForm help={strings.createAccountHelp} title={strings.createAccount}>
       <form className="auth-form" onSubmit={(event) => void handleSubmit(event)}>
+        <label><span>Owner name</span><input autoComplete="name" onChange={(event) => setOwnerName(event.target.value)} required value={ownerName} /></label>
+        <label><span>Vehicle name</span><input autoComplete="organization" onChange={(event) => setVehicleName(event.target.value)} required value={vehicleName} /></label>
+        <label><span>Phone number</span><input autoComplete="tel" inputMode="tel" onChange={(event) => setPhoneNumber(event.target.value)} required type="tel" value={phoneNumber} /></label>
         <label>
           <span>{strings.emailAddress}</span>
           <input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
@@ -117,7 +136,56 @@ export function SignUpPage() {
         <AuthFeedback error={error} success={success} />
         <button className="primary-action" disabled={isSubmitting} type="submit">{isSubmitting ? strings.createAccountProgress : strings.createAccount}</button>
       </form>
-      <Link className="quiet-link" to="/login">{strings.alreadyHaveAccount}</Link>
+      <Link className="quiet-link" to="/login">You already have an account? Sign in</Link>
+    </AuthForm>
+  )
+}
+
+export function VerifyEmailPage() {
+  const { isLoading, user, verifySignUpOtp, resendSignUpOtp } = useAuth()
+  const navigate = useNavigate()
+  const [email, setEmail] = useState(() => sessionStorage.getItem(pendingSignUpEmailKey) ?? '')
+  const [token, setToken] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+
+  if (isLoading) return <AppLoading />
+  if (user) return <Navigate replace to="/setup" />
+
+  async function handleVerify(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null); setSuccess(null); setIsSubmitting(true)
+    try {
+      const message = await verifySignUpOtp(email, token)
+      if (message) setError(message)
+      else {
+        sessionStorage.removeItem(pendingSignUpEmailKey)
+        navigate('/setup', { replace: true })
+      }
+    } finally { setIsSubmitting(false) }
+  }
+
+  async function handleResend() {
+    setError(null); setSuccess(null); setIsResending(true)
+    try {
+      const message = await resendSignUpOtp(email)
+      if (message) setError(message)
+      else setSuccess('A new verification code has been sent to your email.')
+    } finally { setIsResending(false) }
+  }
+
+  return (
+    <AuthForm help="Enter the six-digit code from the BusLedger confirmation email to verify your email address." title="Verify your email">
+      <form className="auth-form" onSubmit={(event) => void handleVerify(event)}>
+        <label><span>{strings.emailAddress}</span><input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
+        <label><span>Email verification code</span><input autoComplete="one-time-code" inputMode="numeric" maxLength={6} onChange={(event) => setToken(event.target.value.replace(/\D/g, '').slice(0, 6))} pattern="[0-9]{6}" required value={token} /></label>
+        <AuthFeedback error={error} success={success} />
+        <button className="primary-action" disabled={isSubmitting} type="submit">{isSubmitting ? 'Verifying…' : 'Verify email'}</button>
+      </form>
+      <button className="text-button" disabled={isResending || !email} onClick={() => void handleResend()} type="button">{isResending ? 'Sending…' : 'Resend code'}</button>
+      <Link className="quiet-link" to="/login">{strings.backToSignIn}</Link>
     </AuthForm>
   )
 }

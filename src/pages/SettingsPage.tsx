@@ -18,7 +18,7 @@ export function SettingsPage() {
       </div>
       <p className="settings-help">{strings.settingsHelp}</p>
       <BusProfileForm
-        initialValue={{ registrationNumber: profile.registration_number, name: profile.name ?? '', route: profile.route ?? '' }}
+        initialValue={{ registrationNumber: profile.registration_number, ownerName: profile.owner_name ?? '', phoneNumber: profile.phone_number ?? '', name: profile.name ?? '', route: profile.route ?? '' }}
         onSave={saveProfile}
         submitLabel={strings.saveChanges}
       />
