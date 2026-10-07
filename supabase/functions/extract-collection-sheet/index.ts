@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' }
+const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
 const categories = ['batha_driver', 'batha_conductor', 'batha_cleaner', 'diesel', 'oil_grease', 'tyre', 'spare_parts', 'workshop', 'stand_fee', 'washing', 'others']
 
 const schema = {
@@ -20,6 +20,7 @@ function asBase64(bytes: Uint8Array): string {
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (request.method !== 'POST') return Response.json({ error: 'Use POST to read a collection sheet.' }, { status: 405, headers: corsHeaders })
   try {
     const token = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
     if (!token) return Response.json({ error: 'Sign in before extracting a sheet.' }, { status: 401, headers: corsHeaders })

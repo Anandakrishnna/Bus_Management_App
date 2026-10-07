@@ -15,10 +15,13 @@ export function RecordsPage() {
     if (!supabase) return
     setLoading(true); setError(null)
     const start = monthStart(month)
-    const { data, error: requestError } = await supabase.from('sheet_summary').select('id, sheet_date, collection, total_operating_expense, daily_balance, total_mismatch, balance_mismatch').gte('sheet_date', start).lt('sheet_date', nextMonthStart(month)).order('sheet_date', { ascending: false })
-    setLoading(false)
-    if (requestError) { setError(requestError.message); return }
-    setSheets((data ?? []) as SheetSummary[])
+    try {
+      const { data, error: requestError } = await supabase.from('sheet_summary').select('id, sheet_date, collection, total_operating_expense, daily_balance, total_mismatch, balance_mismatch').gte('sheet_date', start).lt('sheet_date', nextMonthStart(month)).order('sheet_date', { ascending: false })
+      if (requestError) { setError(requestError.message); return }
+      setSheets((data ?? []) as SheetSummary[])
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Could not load records. Check your connection and try again.')
+    } finally { setLoading(false) }
   }, [month])
   useEffect(() => { void Promise.resolve().then(loadSheets) }, [loadSheets])
   const totals = useMemo(() => sheets.reduce((summary, sheet) => ({ collection: summary.collection + sheet.collection, expense: summary.expense + sheet.total_operating_expense, balance: summary.balance + sheet.daily_balance }), { collection: 0, expense: 0, balance: 0 }), [sheets])

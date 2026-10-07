@@ -23,6 +23,7 @@ export function ReportsPage() {
     setLoading(true)
     setError(null)
     const selectedMonth = monthStart(month)
+    try {
     const [summaryResult, expensesResult, sheetsResult] = await Promise.all([
       supabase.rpc('get_monthly_summary', { p_month: selectedMonth }),
       supabase.rpc('get_monthly_expense_breakdown', { p_month: selectedMonth }),
@@ -36,6 +37,9 @@ export function ReportsPage() {
     setSummary((summaryResult.data?.[0] ?? { total_collection: 0, total_operating_expense: 0, operating_balance: 0, days_entered: 0, mismatch_count: 0 }) as MonthlySummary)
     setExpenses((expensesResult.data ?? []) as ExpenseTotal[])
     setSheets((sheetsResult.data ?? []) as SheetSummary[])
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Could not load this report. Check your connection and try again.')
+    } finally { setLoading(false) }
   }, [month])
 
   useEffect(() => { void Promise.resolve().then(loadReport) }, [loadReport])
@@ -67,7 +71,7 @@ export function ReportsPage() {
     document.body.append(anchor)
     anchor.click()
     anchor.remove()
-    URL.revokeObjectURL(url)
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   return (

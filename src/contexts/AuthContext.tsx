@@ -36,7 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!isMounted) return
       if (error) setSession(null)
       else setSession(data.session)
-      setIsLoading(false)
+    }).catch(() => {
+      if (isMounted) setSession(null)
+    }).finally(() => {
+      if (isMounted) setIsLoading(false)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
@@ -57,32 +60,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     async signIn(email, password) {
       if (!supabase) return 'Supabase is not configured yet.'
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-      return error?.message ?? null
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+        return error?.message ?? null
+      } catch { return 'Could not sign in. Check your connection and try again.' }
     },
     async signUp(email, password) {
       if (!supabase) return 'Supabase is not configured yet.'
+      try {
       const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: { emailRedirectTo: getSignUpRedirectUrl() },
       })
       return error?.message ?? null
+      } catch { return 'Could not create your account. Check your connection and try again.' }
     },
     async sendPasswordReset(email) {
       if (!supabase) return 'Supabase is not configured yet.'
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: getResetRedirectUrl() })
-      return error?.message ?? null
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: getResetRedirectUrl() })
+        return error?.message ?? null
+      } catch { return 'Could not send the reset email. Check your connection and try again.' }
     },
     async updatePassword(password) {
       if (!supabase) return 'Supabase is not configured yet.'
-      const { error } = await supabase.auth.updateUser({ password })
-      return error?.message ?? null
+      try {
+        const { error } = await supabase.auth.updateUser({ password })
+        return error?.message ?? null
+      } catch { return 'Could not update your password. Check your connection and try again.' }
     },
     async signOut() {
       if (!supabase) return null
-      const { error } = await supabase.auth.signOut()
-      return error?.message ?? null
+      try {
+        const { error } = await supabase.auth.signOut()
+        return error?.message ?? null
+      } catch { return 'Could not sign out. Check your connection and try again.' }
     },
   }), [isLoading, session])
 

@@ -1,4 +1,5 @@
 import { standardExpenseCategories, type CollectionSheetDraft, type DraftExpense } from '../types/sheet'
+import { localDateKey } from './month'
 
 const expenseLabels: Record<string, string> = {
   batha_driver: 'Bette (wage) — Driver', batha_conductor: 'Bette (wage) — Conductor', batha_cleaner: 'Bette (wage) — Cleaner',
@@ -9,7 +10,7 @@ export function getExpenseLabel(category: DraftExpense['category'] | string): st
 
 export function createEmptyDraft(id: string, photoPath: string): CollectionSheetDraft {
   return {
-    id, photoPath, sheetDate: new Date().toISOString().slice(0, 10), driverName: '', conductorName: '', cleanerName: '',
+    id, photoPath, sheetDate: localDateKey(), driverName: '', conductorName: '', cleanerName: '',
     expenses: standardExpenseCategories.map((category) => ({ category, amount: null, note: '' })),
     collection: null, writtenTotal: null, writtenBalance: null, notes: '', needsReview: ['all values'],
   }
@@ -20,17 +21,25 @@ export function totalDraftExpenses(expenses: readonly DraftExpense[]): number {
 }
 
 export function normalizeSheetDate(value: string, fallback: string): string {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return isRealSheetDate(value) ? value : fallback
   const match = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/)
   if (!match) return fallback
   const [, day, month, rawYear] = match
   const year = rawYear.length === 2 ? `20${rawYear}` : rawYear
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+  const normalized = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+  return isRealSheetDate(normalized) ? normalized : fallback
+}
+
+function isRealSheetDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
 }
 
 export function validateDraft(draft: CollectionSheetDraft): string | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.sheetDate)) return 'Choose a valid sheet date.'
-  if (draft.sheetDate > new Date().toISOString().slice(0, 10)) return 'Choose a sheet date that is not in the future.'
+  if (!isRealSheetDate(draft.sheetDate)) return 'Choose a valid sheet date.'
+  if (draft.sheetDate > localDateKey()) return 'Choose a sheet date that is not in the future.'
   if (draft.collection === null || !Number.isInteger(draft.collection) || draft.collection < 0) return 'Enter the collection as a whole number of rupees.'
   if (draft.expenses.some((expense) => expense.amount !== null && (!Number.isInteger(expense.amount) || expense.amount < 0))) return 'Expense values must be non-negative whole rupees.'
   return null

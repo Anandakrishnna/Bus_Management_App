@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { monthStart, nextMonthStart } from '../lib/month'
+import { localDateKey, monthStart, nextMonthStart } from '../lib/month'
 import { formatRupees } from '../lib/money'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { useBusProfile } from '../contexts/BusProfileContext'
@@ -26,18 +26,29 @@ export function HomePage() {
   const selectedMonthKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`
   const [summary, setSummary] = useState<MonthlySummary>({ total_collection: 0, total_operating_expense: 0, operating_balance: 0, days_entered: 0 })
   const [recentSheets, setRecentSheets] = useState<RecentSheet[]>([])
+  const [todaySheet, setTodaySheet] = useState<RecentSheet | null>(null)
+  const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const daysInMonth = useMemo(() => new Date(selectedYear, selectedMonth + 1, 0).getDate(), [selectedMonth, selectedYear])
   const loadMonth = useCallback(async () => {
-    if (!supabase) return
-    setLoadError(null)
-    const [summaryResult, sheetsResult] = await Promise.all([
-      supabase.rpc('get_monthly_summary', { p_month: monthStart(selectedMonthKey) }),
-      supabase.from('sheet_summary').select('id, sheet_date, collection, daily_balance').gte('sheet_date', monthStart(selectedMonthKey)).lt('sheet_date', nextMonthStart(selectedMonthKey)).order('sheet_date', { ascending: false }).limit(3),
-    ])
-    if (summaryResult.error || sheetsResult.error) { setLoadError(summaryResult.error?.message ?? sheetsResult.error?.message ?? 'We could not load this month.'); return }
-    setSummary((summaryResult.data?.[0] ?? { total_collection: 0, total_operating_expense: 0, operating_balance: 0, days_entered: 0 }) as MonthlySummary)
-    setRecentSheets((sheetsResult.data ?? []) as RecentSheet[])
+    if (!supabase) { setLoading(false); return }
+    setLoadError(null); setLoading(true)
+    try {
+      const [summaryResult, sheetsResult, todayResult] = await Promise.all([
+        supabase.rpc('get_monthly_summary', { p_month: monthStart(selectedMonthKey) }),
+        supabase.from('sheet_summary').select('id, sheet_date, collection, daily_balance').gte('sheet_date', monthStart(selectedMonthKey)).lt('sheet_date', nextMonthStart(selectedMonthKey)).order('sheet_date', { ascending: false }).limit(3),
+        supabase.from('sheet_summary').select('id, sheet_date, collection, daily_balance').eq('sheet_date', localDateKey()).maybeSingle(),
+      ])
+      if (summaryResult.error || sheetsResult.error || todayResult.error) {
+        setLoadError(summaryResult.error?.message ?? sheetsResult.error?.message ?? todayResult.error?.message ?? 'We could not load this month.')
+        return
+      }
+      setSummary((summaryResult.data?.[0] ?? { total_collection: 0, total_operating_expense: 0, operating_balance: 0, days_entered: 0 }) as MonthlySummary)
+      setRecentSheets((sheetsResult.data ?? []) as RecentSheet[])
+      setTodaySheet(todayResult.data as RecentSheet | null)
+    } catch (reason) {
+      setLoadError(reason instanceof Error ? reason.message : 'We could not load this month. Check your connection and try again.')
+    } finally { setLoading(false) }
   }, [selectedMonthKey])
   useEffect(() => { void Promise.resolve().then(loadMonth) }, [loadMonth])
 
@@ -61,10 +72,10 @@ export function HomePage() {
 
       <section className="today-status" aria-label="Today’s collection-sheet status">
         <div>
-          <p>{strings.todayNotLogged}</p>
-          <span>Start with a photo and check every value before saving.</span>
+          <p>{loading ? 'Checking today’s sheet…' : todaySheet ? strings.todayLogged : strings.todayNotLogged}</p>
+          <span>{todaySheet ? 'Today’s verified collection sheet is saved.' : 'Start with a photo and check every value before saving.'}</span>
         </div>
-        <Link className="text-action" to="/scan">{strings.scan}</Link>
+        <Link className="text-action" to={todaySheet ? `/sheets/${todaySheet.id}` : '/scan'}>{todaySheet ? 'View sheet' : strings.scan}</Link>
       </section>
 
       <section className="summary-card" aria-label={`${selectedMonthLabel} operating balance`}>

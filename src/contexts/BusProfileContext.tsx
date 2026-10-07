@@ -31,6 +31,7 @@ export function BusProfileProvider({ children }: { children: ReactNode }) {
 
     setStatus('loading')
     setError(null)
+    try {
     const { data, error: requestError } = await supabase
       .from('bus_profile')
       .select('owner_id, registration_number, name, route, created_at, updated_at')
@@ -45,6 +46,11 @@ export function BusProfileProvider({ children }: { children: ReactNode }) {
 
     setProfile(data as BusProfile | null)
     setStatus('ready')
+    } catch (reason) {
+      setProfile(null)
+      setError(reason instanceof Error ? reason.message : 'Could not load your bus profile. Check your connection and try again.')
+      setStatus('error')
+    }
   }, [user])
 
   useEffect(() => {
@@ -58,6 +64,7 @@ export function BusProfileProvider({ children }: { children: ReactNode }) {
   const saveProfile = useCallback(async (input: BusProfileInput): Promise<string | null> => {
     if (!supabase || !user) return 'Your session has ended. Please sign in again.'
     const normalized = normalizeBusProfile(input)
+    try {
     const { error: requestError } = await supabase.from('bus_profile').upsert({
       owner_id: user.id,
       registration_number: normalized.registrationNumber,
@@ -68,6 +75,9 @@ export function BusProfileProvider({ children }: { children: ReactNode }) {
     if (requestError) return requestError.message
     await refreshProfile()
     return null
+    } catch (reason) {
+      return reason instanceof Error ? reason.message : 'Could not save your bus profile. Check your connection and try again.'
+    }
   }, [refreshProfile, user])
 
   const value = useMemo<BusProfileContextValue>(() => ({ profile, status, error, refreshProfile, saveProfile }), [error, profile, refreshProfile, saveProfile, status])

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -25,6 +25,7 @@ function withTimeout<T>(request: PromiseLike<T>, message: string): Promise<T> {
 
 async function compressImage(file: File): Promise<Blob> {
   const previewUrl = URL.createObjectURL(file)
+  try {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const element = new Image()
     element.onload = () => resolve(element)
@@ -39,9 +40,9 @@ async function compressImage(file: File): Promise<Blob> {
   if (!context) throw new Error('Your browser could not prepare this image.')
   context.drawImage(image, 0, 0, canvas.width, canvas.height)
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.7))
-  URL.revokeObjectURL(previewUrl)
   if (!blob) throw new Error('Your browser could not compress this image.')
   return blob
+  } finally { URL.revokeObjectURL(previewUrl) }
 }
 
 export function ScanPage() {
@@ -55,15 +56,15 @@ export function ScanPage() {
   function handleFile(file: File | undefined) {
     setError(null)
     if (!file) return
-    const selectedUrl = URL.createObjectURL(file)
-    setSelectedPreview(selectedUrl)
     if (!file.type.startsWith('image/')) { setError('This photo format is not supported. Choose a JPEG, PNG, or HEIC image.'); setSelectedFile(null); return }
     if (file.size > maxImageBytes) { setError('Choose an image smaller than 25 MB.'); setSelectedFile(null); return }
+    setSelectedPreview(URL.createObjectURL(file))
     setSelectedFile(file)
   }
 
+  useEffect(() => () => { if (selectedPreview) URL.revokeObjectURL(selectedPreview) }, [selectedPreview])
+
   function retakePhoto() {
-    if (selectedPreview) URL.revokeObjectURL(selectedPreview)
     setSelectedFile(null)
     setSelectedPreview(null)
     setError(null)
@@ -84,7 +85,6 @@ export function ScanPage() {
       const image = isAppleMobile && file.type === 'image/jpeg' ? file : await compressImage(file)
       previewUrl = URL.createObjectURL(image)
       sessionStorage.setItem('busledger-sheet-photo-preview', previewUrl)
-      setProgress('Uploading your private photo…')
       setProgress('Uploading your private photo…')
       const { error: uploadError } = await withTimeout(supabase.storage.from('sheet-photos').upload(photoPath, image, { contentType: 'image/jpeg', upsert: false }), 'The photo upload took too long. Check your connection and try again.')
       if (uploadError) throw uploadError
@@ -113,7 +113,7 @@ export function ScanPage() {
         <strong>{progress ?? (selectedPreview ? 'Check this photo before continuing' : 'Choose a collection-sheet photo')}</strong><small>{progress ? 'Please keep this page open while the photo is processed.' : selectedPreview ? 'Make sure all writing is clear and the entire sheet is visible.' : 'Use the button below to open Camera or Photo Library.'}</small>
         {error && <p className="scan-picker__error" role="alert">{error}</p>}
       </div>
-      <label className="native-picker-label">{selectedPreview ? 'Choose a different photo' : 'Choose photo'}<input accept="image/*,.heic" aria-label="Choose a collection sheet photo" className="native-picker-input" disabled={Boolean(progress)} onChange={(event) => handleFile(event.target.files?.[0])} type="file" /></label>
+      <label className="native-picker-label">{selectedPreview ? 'Choose a different photo' : 'Choose photo'}<input accept="image/*,.heic" aria-label="Choose a collection sheet photo" className="native-picker-input" disabled={Boolean(progress)} onChange={(event) => { handleFile(event.target.files?.[0]); event.currentTarget.value = '' }} type="file" /></label>
       {selectedFile && <div className="photo-confirmation"><button className="secondary-action" onClick={retakePhoto} type="button">Retake photo</button><button className="primary-action" disabled={Boolean(progress)} onClick={() => void processSelectedPhoto()} type="button">{progress ?? 'Use this photo'}</button></div>}
     </section>
   )
