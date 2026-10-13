@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { formatRupees } from '../lib/money'
+import { getExpenseLabel } from '../lib/sheetDraft'
 import { supabase } from '../lib/supabase'
 
-type SheetDetail = { id: string; sheet_date: string; collection: number; total_operating_expense: number; daily_balance: number; written_total: number | null; written_balance: number | null; total_mismatch: boolean; balance_mismatch: boolean; photo_path: string; driver_name: string | null; conductor_name: string | null; cleaner_name: string | null; notes: string | null }
+type SheetDetail = { id: string; sheet_date: string; bus_registration_number: string | null; collection: number; total_operating_expense: number; daily_balance: number; written_total: number | null; written_balance: number | null; total_mismatch: boolean; balance_mismatch: boolean; photo_path: string; driver_name: string | null; conductor_name: string | null; cleaner_name: string | null; notes: string | null; expenses: { category: string; amount: number; note: string | null }[] }
 
 export function SheetDetailPage() {
   const { id } = useParams()
@@ -14,11 +15,13 @@ export function SheetDetailPage() {
     let active = true
     async function load() {
       if (!supabase || !id) return
-      const { data, error: requestError } = await supabase.from('sheet_summary').select('id, sheet_date, collection, total_operating_expense, daily_balance, written_total, written_balance, total_mismatch, balance_mismatch, photo_path').eq('id', id).maybeSingle()
+      const { data, error: requestError } = await supabase.from('sheet_summary').select('id, sheet_date, bus_registration_number, collection, total_operating_expense, daily_balance, written_total, written_balance, total_mismatch, balance_mismatch, photo_path').eq('id', id).maybeSingle()
       if (requestError || !data) { if (active) setError('We could not load this sheet.'); return }
       const { data: details, error: detailsError } = await supabase.from('daily_sheets').select('driver_name, conductor_name, cleaner_name, notes').eq('id', id).maybeSingle()
       if (detailsError || !details) { if (active) setError('We could not load this sheet.'); return }
-      const record = { ...data, ...details } as SheetDetail
+      const { data: expenses, error: expensesError } = await supabase.from('sheet_expenses').select('category, amount, note').eq('sheet_id', id).order('category')
+      if (expensesError) { if (active) setError('We could not load this sheet.'); return }
+      const record = { ...data, ...details, expenses: expenses ?? [] } as SheetDetail
       const { data: signedPhoto } = await supabase.storage.from('sheet-photos').createSignedUrl(record.photo_path, 300)
       if (active) { setSheet(record); setPhotoUrl(signedPhoto?.signedUrl ?? null) }
     }
@@ -28,5 +31,5 @@ export function SheetDetailPage() {
   if (error) return <section className="sheet-detail"><p className="form-feedback form-feedback--error" role="alert">{error}</p><Link className="secondary-action" to="/records">Back to records</Link></section>
   if (!sheet) return <section className="sheet-detail"><p className="settings-help">Loading sheet…</p></section>
   const people = [['Driver', sheet.driver_name], ['Conductor', sheet.conductor_name], ['Cleaner', sheet.cleaner_name]].filter(([, value]) => value)
-  return <section className="sheet-detail" aria-labelledby="sheet-detail-title"><Link className="quiet-link" to="/records">‹ Back to records</Link><p className="eyebrow">Verified collection sheet</p><h1 id="sheet-detail-title">{new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${sheet.sheet_date}T00:00:00`))}</h1>{photoUrl && <a className="sheet-photo" href={photoUrl} rel="noreferrer" target="_blank"><img alt="Original collection sheet" src={photoUrl} /><span>Original sheet photo · Tap to expand</span></a>}<dl className="sheet-totals"><div><dt>Collection</dt><dd>{formatRupees(sheet.collection)}</dd></div><div><dt>Operating expense</dt><dd>{formatRupees(sheet.total_operating_expense)}</dd></div><div><dt>Daily balance</dt><dd>{formatRupees(sheet.daily_balance)}</dd></div></dl>{(sheet.total_mismatch || sheet.balance_mismatch) && <p className="review-notice">The paper totals differ from the calculated values. Review the original photo.</p>}{people.length > 0 && <section className="detail-section"><h2>Staff</h2>{people.map(([label, value]) => <p key={label}><strong>{label}: </strong>{value}</p>)}</section>}{sheet.notes && <section className="detail-section"><h2>Owner note</h2><p>{sheet.notes}</p></section>}</section>
+  return <section className="sheet-detail" aria-labelledby="sheet-detail-title"><Link className="quiet-link" to="/records">‹ Back to records</Link><p className="eyebrow">Verified collection sheet</p><h1 id="sheet-detail-title">{new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${sheet.sheet_date}T00:00:00`))}</h1><p className="settings-help">Bus number: {sheet.bus_registration_number ?? 'Not recorded'}</p>{photoUrl && <a className="sheet-photo" href={photoUrl} rel="noreferrer" target="_blank"><img alt="Original collection sheet" src={photoUrl} /><span>Original sheet photo · Tap to expand</span></a>}<dl className="sheet-totals"><div><dt>Collection</dt><dd>{formatRupees(sheet.collection)}</dd></div><div><dt>Operating expense</dt><dd>{formatRupees(sheet.total_operating_expense)}</dd></div><div><dt>Daily balance</dt><dd>{formatRupees(sheet.daily_balance)}</dd></div></dl>{(sheet.total_mismatch || sheet.balance_mismatch) && <p className="review-notice">The paper totals differ from the calculated values. Review the original photo.</p>}{people.length > 0 && <section className="detail-section"><h2>Staff</h2>{people.map(([label, value]) => <p key={label}><strong>{label}: </strong>{value}</p>)}</section>}<section className="detail-section"><h2>Expense details</h2>{sheet.expenses.length === 0 ? <p>No expenses recorded.</p> : sheet.expenses.map((expense, index) => <p key={`${expense.category}-${index}`}><strong>{getExpenseLabel(expense.category)}: </strong>{formatRupees(expense.amount)}{expense.note ? ` · ${expense.note}` : ''}</p>)}</section>{sheet.notes && <section className="detail-section"><h2>Owner note</h2><p>{sheet.notes}</p></section>}</section>
 }

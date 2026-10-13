@@ -1,6 +1,6 @@
 export const standardExpenseCategories = [
   'batha_driver', 'batha_conductor', 'batha_cleaner', 'diesel',
-  'oil_grease', 'tyre', 'spare_parts', 'workshop', 'stand_fee', 'washing',
+  'oil_grease', 'tyre', 'spare_parts', 'workshop', 'scan_fee', 'washing',
 ] as const
 
 export type StandardExpenseCategory = (typeof standardExpenseCategories)[number]
@@ -11,6 +11,8 @@ export type DraftExpense = { category: ExpenseCategory; amount: number | null; n
 export type CollectionSheetDraft = {
   id: string
   photoPath: string
+  busRegistrationNumber: string
+  scannedBusRegistrationNumber: string
   sheetDate: string
   driverName: string
   conductorName: string

@@ -6,7 +6,7 @@ describe('collection-sheet drafts', () => {
     const draft = createEmptyDraft('sheet-id', 'owner-id/sheet-id.jpg')
     expect(draft.expenses).toHaveLength(10)
     expect(draft).not.toHaveProperty('checkerName')
-    expect(getExpenseLabel('batha_driver')).toBe('Bette (wage) — Driver')
+    expect(getExpenseLabel('batha_driver')).toBe('Betta (wage) — Driver')
     expect(draft.collection).toBeNull()
   })
 
@@ -21,8 +21,9 @@ describe('collection-sheet drafts', () => {
 
   it('requires a non-future date and whole-rupee collection before saving', () => {
     const draft = createEmptyDraft('sheet-id', 'owner-id/sheet-id.jpg')
-    expect(validateDraft(draft)).toBe('Enter the collection as a whole number of rupees.')
-    expect(validateDraft({ ...draft, collection: 12000, sheetDate: '2999-01-01' })).toBe('Choose a sheet date that is not in the future.')
-    expect(validateDraft({ ...draft, collection: 12000 })).toBeNull()
+    const complete = { ...draft, driverName: 'Driver', conductorName: 'Conductor', cleanerName: 'Cleaner', collection: 12000, sheetDate: '2026-07-18' }
+    expect(validateDraft(draft)).toBe('Enter the date shown on the collection sheet.')
+    expect(validateDraft({ ...complete, sheetDate: '2999-01-01' })).toBe('Choose a sheet date that is not in the future.')
+    expect(validateDraft(complete)).toBeNull()
   })
 })
